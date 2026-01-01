@@ -1,4 +1,4 @@
-import { CsprClickUI, ClickProvider, CsprClickThemes } from "@make-software/csprclick-ui";
+import { ClickProvider, CsprClickThemes } from "@make-software/csprclick-ui";
 import { ThemeProvider } from "styled-components";
 import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
@@ -116,9 +116,6 @@ export default function Dashboard() {
               )}
             </div>
           </main>
-          <div className="fixed top-4 right-4 z-50">
-            <CsprClickUI />
-          </div>
         </div>
       </ClickProvider>
     </ThemeProvider>

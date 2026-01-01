@@ -1,5 +1,5 @@
-import { ClickWallet } from '@make-software/csprclick-ui';
-import styled from 'styled-components';
+import { ClickUI } from "@make-software/csprclick-ui";
+import styled from "styled-components";
 
 // Styling to override csprclick defaults to match our theme
 const WalletWrapper = styled.div`
@@ -23,13 +23,7 @@ const WalletWrapper = styled.div`
 export function WalletConnect() {
   return (
     <WalletWrapper>
-      <ClickWallet 
-        style={{
-          // Passing inline styles for immediate override
-          borderRadius: '12px',
-          fontFamily: 'Outfit',
-        }}
-      />
+      <ClickUI />
     </WalletWrapper>
   );
 }
