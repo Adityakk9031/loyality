@@ -3,26 +3,18 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { CasperClient, DeployUtil, Keys, RuntimeArgs, CLValueBuilder } from "casper-js-sdk";
+import CasperSDK from "casper-js-sdk";
 import fs from 'fs';
+
+// Destructure from default export for compatibility
+const { CasperClient, DeployUtil, Keys, RuntimeArgs, CLValueBuilder } = CasperSDK;
 
 // Helper to load key from hex string or file
 const loadKey = (keyParam: string) => {
   try {
-    // If it's a file path
     if (fs.existsSync(keyParam)) {
       return Keys.Ed25519.loadKeyPairFromPrivateFile(keyParam);
     } 
-    // If it's a hex string (assuming Ed25519 for this example, or Secp256k1)
-    // Casper keys usually come in .pem files, but user said "Hex format".
-    // We'll assume it's the private key hex. 
-    // Note: handling hex keys directly might depend on the curve. 
-    // Let's assume Ed25519 as it's common on Casper.
-    const keyPair = Keys.Ed25519.parsePrivateKey(Keys.Ed25519.readBase64WithPEM(keyParam)); 
-    // Wait, readBase64WithPEM expects PEM content. 
-    // If it's raw hex, we might need a different approach.
-    // For simplicity/robustness, let's try to parse as Ed25519.
-    // Ideally we'd use a library helper, but here we will try:
     const privateKey = Uint8Array.from(Buffer.from(keyParam, 'hex'));
     return Keys.Ed25519.parsePrivateKey(privateKey);
   } catch (e) {
@@ -52,21 +44,17 @@ export async function registerRoutes(
       const client = new CasperClient(nodeAddress);
 
       // Prepare keys
-      // NOTE: For 'Hex format' private key, we assume it is the raw private key bytes in hex.
-      // This is a simplification. In production, robust key loading is needed.
       const merchantKeyPair = Keys.Ed25519.parsePrivateKey(
         Uint8Array.from(Buffer.from(merchantKeyHex, 'hex'))
       );
 
       // Contract Call Logic
-      // 1. Create RuntimeArgs
       const args = RuntimeArgs.fromMap({
-        recipient: CLValueBuilder.string(userAddress), // Assuming contract takes recipient as string (hash) or public key
+        recipient: CLValueBuilder.string(userAddress),
         amount: CLValueBuilder.u256(amount)
       });
 
-      // 2. Create Deploy
-      // We need to know if the contract hash includes 'hash-' prefix.
+      // Create Deploy
       const contractHashClean = contractHash.startsWith('hash-') ? contractHash.slice(5) : contractHash;
       
       const deploy = DeployUtil.makeDeploy(
@@ -76,16 +64,16 @@ export async function registerRoutes(
         ),
         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
           Uint8Array.from(Buffer.from(contractHashClean, 'hex')),
-          "issue_points", // Entry point name
+          "issue_points",
           args
         ),
-        DeployUtil.standardPayment(10000000000) // 10 CSPR gas payment (adjust as needed)
+        DeployUtil.standardPayment(10000000000)
       );
 
-      // 3. Sign Deploy
+      // Sign Deploy
       const signedDeploy = deploy.sign([merchantKeyPair]);
 
-      // 4. Send Deploy
+      // Send Deploy
       const deployHash = await client.putDeploy(signedDeploy);
 
       res.status(200).json({
