@@ -10,11 +10,29 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useClickRef } from "@make-software/csprclick-ui";
+import { useState, useEffect } from "react";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const clickRef = useClickRef();
-  const activeAccount = clickRef?.activeAccount;
+  const [activeAccount, setActiveAccount] = useState<any>(null);
+
+  useEffect(() => {
+    if (clickRef) {
+      // Use getActiveAccount() instead of activeAccount property
+      const account = clickRef.getActiveAccount();
+      setActiveAccount(account);
+
+      // Listen for account changes if the SDK supports it
+      const interval = setInterval(() => {
+        const currentAccount = clickRef.getActiveAccount();
+        if (JSON.stringify(currentAccount) !== JSON.stringify(activeAccount)) {
+          setActiveAccount(currentAccount);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [clickRef, activeAccount]);
 
   const issuePointsMutation = useMutation({
     mutationFn: async (data: { userAddress: string; amount: string }) => {
