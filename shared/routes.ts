@@ -5,7 +5,7 @@ export const errorSchemas = {
   validation: z.object({
     message: z.string(),
     field: z.string().optional(),
-  }),
+  }), 
   notFound: z.object({
     message: z.string(),
   }),
